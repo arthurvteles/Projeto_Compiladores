@@ -1,0 +1,652 @@
+PARSER_BEGIN(Karloff)
+import java.io.*;
+
+//CLASSE QUE CRIA A ARVORE
+class KARLOFFARVORE {
+  MAIN main ; 
+  LISTADEFUNCOES list_func ; 
+
+  //PODEMOS TER 2 CONSTRUTORES 
+  KARLOFFARVORE (MAIN main){
+    this.main = main 
+  }
+
+  KARLOFFARVORE (MAIN main, LISTADEFUNCOES list_func){
+    this.main = main 
+    this.list_func = list_func
+  }
+
+  @Override
+  public String toString() {
+    // Declaração do pacote e importação
+    StringBuilder javaCode = new StringBuilder();
+    javaCode.append("package org.test;\n");
+    javaCode.append("import java.util.Scanner;\n");
+
+    // Início da classe KarloffTeste
+    javaCode.append("public class KarloffTeste {\n\n");
+
+    // Adicionar o código principal, se existir
+    if (this.main != null) {
+        javaCode.append(this.main).append("\n");
+    }
+
+    // Adicionar a quebra de linha adicional, se lf não for nulo
+    if (this.lf != null) {
+        javaCode.append(this.lf);
+    }
+
+    // Fim da classe KarloffTeste
+    javaCode.append("\n}\n");
+
+    return javaCode.toString();
+  }
+}
+
+
+//CLASSE MAIN 
+class MAIN{
+  ArrayList<DECLARACAOVARIAVEL> declaracaovariavel; 
+  ArrayList<SEQUENCIACOMANDO> sequenciacomando ; 
+
+  MAIN(ArrayList<DECLARACAOVARIAVEL> declaracaovariavel,ArrayList<SEQUENCIACOMANDO> sequenciacomando ){
+    this.declaracaovariavel = declaracaovariavel ; 
+    this.sequenciacomando = sequenciacomando ; 
+  }
+
+   @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("void main() {\n");
+        for (DECLARACAOVARIAVEL decVar : this.declaracaovariavel) {
+            stringBuilder.append(decVar).append("\n");
+        }
+        return stringBuilder.append(this.sequenciacomando).append("}\n").toString();
+    }
+}
+
+//FAZ AS DECLARACOES DE VARIAVEIS
+class DECLARACAOVARIAVEL{
+    TOKENID tokenid;
+    TIPOVARIAVEL tipovariavel;
+
+    DECLARACAOVARIAVEL(TOKENID tokenid, TIPOVARIAVEL tipovariavel){
+        this.tipovariavel = tipovariavel;
+        this.tokenid = tokenid;
+    }
+
+    @Override
+    public String toString() {
+        if (this.tipovariavel != null && this.tokenid != null)
+            return this.tipovariavel + " " + this.tokenid + ";";
+        else
+            return "";
+    }
+}
+
+//RETORNA OS TIPOS DE VARIAVEIS EM C
+class TIPOVARIAVEL{
+    String tipo;
+
+    TIPOVARIAVEL(String tipo){
+        this.tipo = tipo;
+    }
+
+    @Override
+    public String toString() {
+        switch (this.tipo){
+            case "integer":
+                return "int";
+            case "bool":
+                return "bool";
+            default:
+                return "";
+        }
+    }
+}
+
+//RETORNA A SEQUENCIA DE COMANDOS 
+class SEQUENCIACOMANDO {
+    ArrayList<COMANDO> comando;
+
+    SEQUENCIACOMANDO(ArrayList<COMANDO> comando){
+        this.comando = comando;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        for (COMANDO com : this.comando) {
+            stringBuilder.append(com).append("\n");
+        }
+        return stringBuilder.toString();
+    }
+}
+
+//CLASSE BASE PARA OS COMANDOS
+class COMANDO{}
+
+//RETORNA O COMANDO DE ATRIBUICAO EM C 
+class ATRIBUICAO extends COMANDO{
+  EXP exp ; 
+  TOKENID tokenid; 
+
+  ATRIBUICAO(EXP exp , TOKENID tokenid){
+    this.exp = exp ; 
+    this.tokenid = tokenid ;
+  }
+  
+  @Override
+    public String toString() {
+        return this.tokenid + " = " + this.exp + ";";
+    }
+
+}
+
+//RETORNA A CHAMADA DE FUNCAO EM C 
+class CHAMADAFUNCAO extends COMANDO{
+  TOKENID tokenid ; 
+  LISTAEXPRESSAO listaexpressao ; 
+
+  CHAMADAFUNCAO(TOKENID tokenid, LISTAEXPRESSAO listaexpressao) {
+    this.tokenid = tokenid ; 
+    this.listaexpressao = listaexpressao; 
+  }
+
+    @Override
+    public String toString() {
+        if (this.listaExp == null) return this.tokenId + "()" + ";";
+        return this.tokenId + "(" + this.listaExp + ")" + ";";
+    }
+}
+
+//RETORNA O LACO WHILE EM C  
+class LACO_WHILE extends COMANDO{
+  EXP exp ; 
+  SEQUENCIACOMANDO sequenciacomando ; 
+
+  LACO_WHILE(EXP exp, SEQUENCIACOMANDO sequenciacomando){
+    this.exp = exp ; 
+    this.sequenciacomando = sequenciacomando; 
+  }
+
+    @Override
+    public String toString() {
+        return "while (" + this.exp + ") {\n" + this.sequenciacomando + "}";
+    }
+}
+
+//RETORNA O IF EM C 
+class COND_IF extends COMANDO{
+  EXP exp ; 
+  SEQUENCIACOMANDO sequenciacomando ; 
+
+  COND_IF(EXP exp , SEQUENCIACOMANDO sequenciacomando) {
+    this.exp = exp ; 
+    this.sequenciacomando = sequenciacomando; 
+  }
+
+  @Override
+    public String toString() {
+        return "if (" + this.exp + ") {\n" + this.sequenciacomando + "}";
+    }
+}
+
+//RETORNA DO WHILE EM C 
+class LACO_REPEAT extends COMANDO{
+  EXP exp ; 
+  SEQUENCIACOMANDO sequenciacomando ; 
+
+  LACO_REPEAT(EXP exp , SEQUENCIACOMANDO sequenciacomando){
+    this.exp = exp ; 
+    this.sequenciacomando = sequenciacomando ; 
+  }
+
+   @Override
+    public String toString() {
+        return "do {\n" + this.sequenciacomando + "} while (" + this.exp + ");";
+    }
+}
+
+//RETORNA RETURN EM C 
+class RETORNO extends COMANDO{
+  EXP exp ; 
+
+  RETORNO(EXP exp){
+    this.exp = exp ; 
+  }
+
+  @Override
+  public String toString() {
+      return "return " + this.exp + ";";
+  }
+}
+
+//RETORN PRINT EM C 
+class PRINT extends COMANDO{
+  EXP exp ; 
+
+  PRINT(EXP exp){
+    this.exp = exp ; 
+  }
+
+  @Override
+  public String toString() {
+      return "printf(\"%d\" ," + this.exp + ");";
+  }
+}
+
+//RETORNA SCANF EM C 
+class LEITURA extends COMANDO{
+  TOKENID tokenid ; 
+
+  LEITURA(TOKENID tokenid){
+    this.tokenid = tokenid 
+  }
+
+  @Override
+  public String toString() {
+      return "scanf(\"%d\", &" + this.tokenid + ");";
+  }
+}
+
+class EXP{}
+
+class RECURSAOEXP extends EXP{
+  EXP exp1 ; 
+  EXP exp2 ; 
+  OP op 
+  
+  RECURSAOEXP(EXP exp1, EXP exp2, OP op){
+    this.exp1 = exp1 ; 
+    this.exp2 = exp2 ; 
+    this.OP = op ; 
+  }
+
+  @Override
+    public String toString() {
+        return "(" + this.exp1 + " " + this.op + " " + this.exp2 + ")";
+    }
+}
+
+class FATOR extends EXP{}
+class TOKENID extends FARTOR{
+  String tk ; 
+
+  TOKENID(String tk){
+    this.tk = tk ; 
+  }
+
+  @Override
+    public String toString() {
+        return this.tk;
+    }
+}
+
+class TOKENNUM extends FATOR{
+  Integer num ;  
+  
+  TOKENNUM(Integer num){
+    this.num = num ; 
+  }
+ 
+ @Override
+    public String toString() {
+        return this.num.toString();
+    }
+}
+
+class CHAMADAFUNCAOFATOR extends FATOR{
+  TOKENID tokenid ; 
+  LISTAEXPRESSAO listaexpressao ; 
+
+  CHAMADAFUNCAOFATOR(TOKENID tokenid , LISTAEXPRESSAO listaexpressao){
+    this.tokenid = tokenid ; 
+    this.listaexpressao = listaexpressao ; 
+  }
+  
+  @Override
+  public String toString() {
+      if (this.listaexpressao == null) return this.tokenid + "()";
+        return this.tokenid + "(" + this.listaexpressao + ")";
+    }
+}
+
+class TF extends Fator{
+    String tf;
+
+    TF(String tf){
+        this.tf = tf;
+    }
+
+    @Override
+    public String toString() {
+        return this.tf;
+    }
+}
+
+class OP{
+  String op ; 
+
+  OP(String op){
+    this.op = op ; 
+  }
+
+  @Override
+    public String toString() {
+        return this.op;
+    }
+}
+
+class LISTAEXPRESSAO{
+    ArrayList<EXP> exp;
+
+    LISTAAEXPRESSAO(ArrayList<EXP> exp){
+        this.exp = exp;
+    }
+
+    @Override
+     public String toString() {
+        if (this.exp.size() == 1) return exp.get(0).toString();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (EXP ep : this.exp) {
+            stringBuilder.append(ep).append(", ");
+        }
+        return stringBuilder.toString();
+    }
+}
+
+class FUNCAO{
+    TOKENID tokenid;
+    TIPOVARIAVEL tipovariavel;
+    LISTAARGUMENTOS listaargumentos;
+    ArrayList<DECLARACAOVARIAVEL> declaracaovariavel;
+    SEQUENCIACOMANDO sequenciacomandos;
+
+    FUNCAO(TOKENID tokenid,TIPOVARIAVEL tipovariavel,LISTAARGUMENTOS listaargumentos,ArrayList<DECLARACAOVARIAVEL> declaracaovariavel,SEQUENCIACOMANDO sequenciacomandos){
+            this.tokenid = tokenid;
+            this.tipovariavel = tipovariavel;
+            this.listaargumentos = listaargumentos;
+            this.declaracaovariavel= declaracaovariavel;
+            this.sequenciacomandos = sequenciacomandos;
+    }
+
+  @Override
+     public String toString() {
+        StringBuilder stringBuilder = new StringBuilder(this.tipovariavel + " " + this.tokenid + "(" + this.listaargumentos + ") {\n");
+        for (DECLARACAOVARIAVEL decVar : this.declaracaovariavel) {
+            stringBuilder.append(decVar).append("\n");
+        }
+        stringBuilder.append(sequenciacomandos).append("}\n");
+        return stringBuilder.toString();
+    }
+}
+
+class LISTAFUNCAO{
+    ArrayList<FUNCAO> funcoes;
+
+    LISTAFUNCAO(ArrayList<FUNCAO> funcoes){
+        this.funcoes = funcoes;
+    }
+
+    @Override
+     public String toString() {
+        if (this.funcoes.size() == 1) return this.funcoes.get(0).toString();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (Funcao func : this.funcoes) {
+            stringBuilder.append(func.toString()).append("\n");
+        }
+        return stringBuilder.toString();
+    }
+}
+
+class ARGUMENTO{
+    TOKENID tokenid;
+    TIPOVARIAVEL tipovariavel;
+
+    Argumento(TOKENID tokenid, TIPOVARIAVEL tipovariavel){
+        this.tokenid = tokenid;
+        this.tipovariavel = tipovariavel;
+    }
+    
+    @Override
+     public String toString() {
+        return this.tipovariavel + " " + this.tokenid;
+    }
+}
+
+class LISTAARGUMENTOS{
+    ArrayList<ARGUMENTO> argumentos;
+
+    LISTAARGUMENTOS(ArrayList<ARGUMENTO> argumentos){
+        this.argumentos = argumentos;
+    }
+
+    @Override
+     public String toString() {
+        if (this.argumentos.size() == 1) return this.argumentos.get(0).toString();
+        StringBuilder stringBuilder = new StringBuilder();
+        for (ARGUMENTO arg : this.argumentos) {
+            stringBuilder.append(arg).append(", ");
+        }
+        return stringBuilder.toString();
+    }
+}
+
+public class Karloff {
+  public static void main(String args[]) throws ParseException, IOException {
+
+    Karloff parser = new Karloff(new FileInputStream(args[0]));
+    KARLOFFARVORE  arvore = parser.Karloff()
+    print(Karloff)
+  }
+
+}
+
+PARSER_END(Karloff)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+}
+
+TOKEN :
+{
+  <MAIN: "main">
+| <ACHAVES: "{">
+| <FCHAVES: "}">
+| <VOID: "void">
+| <APARENTESES: "(">
+| <FPARENTESES: ")">
+| <NEWVAR: "newVar">
+| <PONTOVIRGULA: ";">
+| <INTEIRO: "integer">
+| <BOOLEANO: "bool">
+| <ATRIB: "=">
+| <IF: "if">
+| <THEN: "then">
+| <WHILE: "while">
+| <REPEAT: "repeat">
+| <UNTIL: "until">
+| <RETURN: "return">
+| <SOUT: "System.output">
+| <SREADINT: "System.readint">
+| <TRUE: "true">
+| <FALSE: "false">
+| <SOMA: "+">
+| <SUB: "-">
+| <MULT: "*">
+| <DIV: "/">
+| <AND: "&">
+| <OR: "|">
+| <MENOR: "<">
+| <MAIOR: ">">
+| <IGUAL: "==">
+| <VIRGULA: ",">
+| <FUNC: "func">
+}
+
+TOKEN :
+{
+  <NUM : (["0"-"9"])+>
+ |< ID: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","0"-"9"])*>
+
+}
+
+// KARLOFF → MAIN FUNC?
+void Karloff () :
+{}
+{
+Main() (Func())?
+<EOF>
+}
+
+// MAIN → "void" "main" "(" ")" "{" VARDECL SEQCOMANDOS "}"
+void Main () :
+{}
+{
+<VOID> <MAIN> <APARENTESES> <FPARENTESES> <ACHAVES> Vardecl() SeqComandos() <FCHAVES>
+}
+
+// VARDECL →  VARDECL’
+void Vardecl () :
+{}
+{
+Vardecl_()
+}
+
+// VARDECL’ → "newVar" TIPO TOKEN_id ";" VARDECL’ | vazio
+void Vardecl_ () :
+{}
+{
+ (<NEWVAR> Tipo() <ID> <PONTOVIRGULA> Vardecl_())?
+}
+
+// TIPO → "integer" | "bool"
+void Tipo () :
+{}
+{
+<INTEIRO> | <BOOLEANO>
+}
+
+// SEQCOMANDOS → SEQCOMANDOS’
+void SeqComandos () :
+{}
+{
+SeqComandos_()
+}
+
+// SEQCOMANDOS’ → COMANDO SEQCOMANDOS’ | vazio
+void SeqComandos_ () :
+{}
+{
+(Comando() SeqComandos_())?
+}
+
+
+// COMANDO → TOKEN_id COMANDO’
+// | "if" "(" EXP ")" "then" "{" SEQCOMANDOS "}"  ";"
+// | "while" "(" EXP ")" "{" SEQCOMANDOS "}"  ";"
+// | "repeat" "{" SEQCOMANDOS "}" "until" "(" EXP ")"  ";"
+// | "return" EXP  ";"
+// | "System.output" "(" EXP ")"  ";"
+void Comando () :
+{}
+{
+(<ID> Comando_())
+| (<IF> <APARENTESES> Exp() <FPARENTESES> <THEN> <ACHAVES> SeqComandos() <FCHAVES> <PONTOVIRGULA>)
+| (<WHILE> <APARENTESES> Exp() <FPARENTESES> <ACHAVES> SeqComandos() <FCHAVES> <PONTOVIRGULA>)
+| (<REPEAT> <ACHAVES> SeqComandos() <FCHAVES> <UNTIL> <APARENTESES> Exp() <FPARENTESES> <PONTOVIRGULA>)
+| (<RETURN> Exp() <PONTOVIRGULA>)
+| (<SOUT> <APARENTESES> Exp() <FPARENTESES> <PONTOVIRGULA>)
+}
+
+// COMANDO’ → "=" COMANDO’’ | "(" LISTAEXP? ")"  ";"
+void Comando_ () :
+{}
+{
+(<ATRIB> Comando__())
+| (<APARENTESES> (ListaExp())? <FPARENTESES> <PONTOVIRGULA>)
+}
+
+// COMANDO’’ → EXP ";" | "System.readint" "(" ")" ";"
+void Comando__ () :
+{}
+{
+(Exp() <PONTOVIRGULA>)
+| (<SREADINT> <APARENTESES> <FPARENTESES> <PONTOVIRGULA>)
+}
+
+//EXP →  "(" EXP OP EXP ")" | FATOR
+void Exp () :
+{}
+{
+(<APARENTESES> Exp() Op() Exp() <FPARENTESES>)
+| Fator()
+}
+
+//FATOR →  TOKEN_id FATOR’| TOKEN_numliteral | "true" | "false"
+void Fator () :
+{}
+{
+(<ID> Fator_()) | <NUM> | <TRUE> | <FALSE>
+}
+
+//FATOR’ →  "(" LISTAEXP? ")" | vazio
+void Fator_ () :
+{}
+{
+(<APARENTESES> (ListaExp())? <FPARENTESES>)?
+}
+
+//OP →  "+" | "-" | "*" | "/" | "&" | "|" | "<" | ">" | "=="
+void Op () :
+{}
+{
+<SOMA> | <SUB> | <MULT> | <DIV> | <AND> | <OR> | <MENOR> | <MAIOR> | <IGUAL>
+}
+
+//LISTAEXP → EXP LISTAEXP’
+void ListaExp () :
+{}
+{
+Exp() ListaExp_()
+}
+
+//LISTAEXP’ → "," EXP  LISTAEXP’ | vazio
+void ListaExp_ () :
+{}
+{
+(<VIRGULA> Exp() ListaExp_())?
+}
+
+//FUNC → "func" TIPO TOKEN_id "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"  FUNC’
+void Func () :
+{}
+{
+<FUNC> Tipo() <ID> <APARENTESES> (ListaArg())? <FPARENTESES> <ACHAVES> Vardecl() SeqComandos() <FCHAVES> Func_()
+}
+
+//FUNC’ → “func" TIPO TOKEN_id "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"  FUNC’ | vazio
+void Func_ () :
+{}
+{
+(<FUNC> Tipo() <ID> <APARENTESES> (ListaArg())? <FPARENTESES> <ACHAVES> Vardecl() SeqComandos() <FCHAVES> Func_() )?
+}
+
+//LISTAARG → TIPO TOKEN_id LISTAARG’
+void ListaArg () :
+{}
+{
+Tipo() <ID> ListaArg_()
+}
+
+//LISTAARG’ → "," TIPO TOKEN_id LISTAARG’ | vazio
+void ListaArg_ () :
+{}
+{
+(<VIRGULA> Tipo() <ID> ListaArg_())?
+}
