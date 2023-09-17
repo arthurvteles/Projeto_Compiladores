@@ -4,14 +4,14 @@ import java.io.*;
 //CLASSE QUE CRIA A ARVORE
 class KARLOFFARVORE {
   MAIN main ; 
-  LISTADEFUNCOES list_func ; 
+  LISTAFUNCAO list_func ; 
 
   //PODEMOS TER 2 CONSTRUTORES 
   KARLOFFARVORE (MAIN main){
     this.main = main 
   }
 
-  KARLOFFARVORE (MAIN main, LISTADEFUNCOES list_func){
+  KARLOFFARVORE (MAIN main, LISTAFUNCAO list_func){
     this.main = main 
     this.list_func = list_func
   }
@@ -341,7 +341,7 @@ class OP{
 class LISTAEXPRESSAO{
     ArrayList<EXP> exp;
 
-    LISTAAEXPRESSAO(ArrayList<EXP> exp){
+    LISTAEXPRESSAO(ArrayList<EXP> exp){
         this.exp = exp;
     }
 
@@ -497,53 +497,46 @@ TOKEN :
 }
 
 // KARLOFF → MAIN FUNC?
-void Karloff () :
-{}
-{
-Main() (Func())?
+KARLOFFARVORE Karloff () :
+{ MAIN main = null ; LISTAFUNCAO list_func = null ;}
+{ 
+  main = Main() (list_func = Func())?
 <EOF>
+  {return list_func == null ? new KARLOFFARVORE(main) : new KARLOFFARVORE(main, list_func);}
+
 }
 
 // MAIN → "void" "main" "(" ")" "{" VARDECL SEQCOMANDOS "}"
-void Main () :
-{}
+MAIN Main () :
+{ArrayList<DECLARACAOVARIAVEL> declaracaovariavel = null ; ArrayList<SEQUENCIACOMANDO> sequenciacomando = null ;}
 {
-<VOID> <MAIN> <APARENTESES> <FPARENTESES> <ACHAVES> Vardecl() SeqComandos() <FCHAVES>
+<VOID> <MAIN> <APARENTESES> <FPARENTESES> <ACHAVES> declaracaovariavel = Vardecl() sequenciacomando = SeqComandos() <FCHAVES>
+ {return new Principal(declaracaovariavel, sequenciacomando);}
 }
 
-// VARDECL →  VARDECL’
-void Vardecl () :
-{}
-{
-Vardecl_()
-}
 
-// VARDECL’ → "newVar" TIPO TOKEN_id ";" VARDECL’ | vazio
-void Vardecl_ () :
-{}
+// VARDECL → VARDECL "newVar" TIPO TOKEN_id ";" | vazio
+ArrayList<DECLARACAOVARIAVEL> Vardecl () :
+{Token t = null ; TIPOVARIAVEL tipovariavel = null ; ArrayList<DECLARACAOVARIAVEL> dv = new ArrayList();}
 {
- (<NEWVAR> Tipo() <ID> <PONTOVIRGULA> Vardecl_())?
+    (<NEWVAR> tipovariavel =Tipo() t =<ID> <PONTOVIRGULA> {dv.add(new DECLARACAOVARIAVEL(tipovariavel, new TOKENID(t.image)));})*
+    {return dv;}
 }
 
 // TIPO → "integer" | "bool"
-void Tipo () :
-{}
+TIPOVARIAVEL Tipo () :
+{TIPOVARIAVEL tipovariavel = null ;}
 {
-<INTEIRO> | <BOOLEANO>
+<INTEIRO>{tipovariavel = new TIPOVARIAVEL("integer") ;} | <BOOLEANO> {tipovariavel = new TIPOVARIAVEL("bool");}
+ {return tipovariavel;}
 }
 
-// SEQCOMANDOS → SEQCOMANDOS’
-void SeqComandos () :
-{}
+// SEQCOMANDOS → SEQCOMANDOS COMANDO | vazio
+SEQUENCIACOMANDO  SeqComandos () :
+{COMANDO c = null ; ArrayList<COMANDO> comandos = new ArrayList() ; }
 {
-SeqComandos_()
-}
-
-// SEQCOMANDOS’ → COMANDO SEQCOMANDOS’ | vazio
-void SeqComandos_ () :
-{}
-{
-(Comando() SeqComandos_())?
+    (c=COMANDO() {comandos.add(c);})*
+    {return new SEQUENCIACOMANDO(comandos);}
 }
 
 
@@ -553,100 +546,118 @@ void SeqComandos_ () :
 // | "repeat" "{" SEQCOMANDOS "}" "until" "(" EXP ")"  ";"
 // | "return" EXP  ";"
 // | "System.output" "(" EXP ")"  ";"
-void Comando () :
-{}
+
+COMANDO Comando () :
+{Token t = null; TOKENID tokenid = null; SEQCOMANDOS seqCom = null;
+EXP e = null; COMANDO result = null; COMANDO comL = null;}
 {
-(<ID> Comando_())
-| (<IF> <APARENTESES> Exp() <FPARENTESES> <THEN> <ACHAVES> SeqComandos() <FCHAVES> <PONTOVIRGULA>)
-| (<WHILE> <APARENTESES> Exp() <FPARENTESES> <ACHAVES> SeqComandos() <FCHAVES> <PONTOVIRGULA>)
-| (<REPEAT> <ACHAVES> SeqComandos() <FCHAVES> <UNTIL> <APARENTESES> Exp() <FPARENTESES> <PONTOVIRGULA>)
-| (<RETURN> Exp() <PONTOVIRGULA>)
-| (<SOUT> <APARENTESES> Exp() <FPARENTESES> <PONTOVIRGULA>)
+  t=<ID> comL=Comando_(new TOKENID(t.image)) {result = comL;}
+| (<IF> <APARENTESES> e=Exp() <FPARENTESES> <THEN> <ACHAVES> seqCom = SeqComandos() <FCHAVES> <PONTOVIRGULA>) {result = new COND_IF(e, seqCom);}
+| (<WHILE> <APARENTESES> e=Exp() <FPARENTESES> <ACHAVES> seqCom = SeqComandos() <FCHAVES> <PONTOVIRGULA>)  {result = new LACO_WHILE(e, seqCom);}
+| (<REPEAT> <ACHAVES> seqCom = SeqComandos() <FCHAVES> <UNTIL> <APARENTESES> e = Exp() <FPARENTESES> <PONTOVIRGULA>) {result = new LACO_REPEAT(e, seqCom)}
+| (<RETURN> e = Exp() <PONTOVIRGULA>)  {result = new RETORNO(e);}
+| (<SOUT> <APARENTESES> e = Exp() <FPARENTESES> <PONTOVIRGULA>){result = new PRINT(e);}
+
+   {return result;}
+
 }
 
 // COMANDO’ → "=" COMANDO’’ | "(" LISTAEXP? ")"  ";"
-void Comando_ () :
-{}
+COMANDO Comando_ (TOKENID t) :
+{COMANDO result = null; COMANDO comLL = null; LISTAEXPRESSAO l = null;}
 {
-(<ATRIB> Comando__())
-| (<APARENTESES> (ListaExp())? <FPARENTESES> <PONTOVIRGULA>)
+  (
+        <ATRIB> comLL=Comando__(t) {result = comLL;}
+        |<APARENTESES> (l=ListaExp())? <FPARENTESES> <PONTOVIRGULA> {result = new CHAMADAFUNCAO(t, l);}
+  )
+  {return result;}
 }
 
 // COMANDO’’ → EXP ";" | "System.readint" "(" ")" ";"
-void Comando__ () :
-{}
+COMANDO Comando__ (TOKENID t) :
+{COMANDO result = null ; EXP e = null}
 {
-(Exp() <PONTOVIRGULA>)
-| (<SREADINT> <APARENTESES> <FPARENTESES> <PONTOVIRGULA>)
+    (
+        e=Exp() <PONTOVIRGULA> {result = new ATRIBUICAO(e, t);}
+        <SREADINT> <APARENTESES> <FPARENTESES> <PONTOVIRGULA> {result = new LEITURA(t);}
+    )
+    {return result;}
 }
 
 //EXP →  "(" EXP OP EXP ")" | FATOR
-void Exp () :
-{}
-{
-(<APARENTESES> Exp() Op() Exp() <FPARENTESES>)
-| Fator()
+EXP Exp () :
+{EXP e1 = null; EXP e2 = null; OP op = null; EXP result = null; FATOR f = null;}
+{ 
+  (
+  <APARENTESES> e1 = Exp() op = Op() e2 = Exp() <FPARENTESES> {result = new RECURSAOEXP(e1, e2, op);}
+| f = Fator() {result = f;}
+  )
 }
 
 //FATOR →  TOKEN_id FATOR’| TOKEN_numliteral | "true" | "false"
-void Fator () :
-{}
+FATOR Fator () :
+{FATOR result = null; FATOR fatorL = null; Token t = null; TOKENID tokenid = null; TOKENNUM TokenNum = null;}
 {
-(<ID> Fator_()) | <NUM> | <TRUE> | <FALSE>
+  (
+        t=<ID> fatorL=Fator_(new TOKENID(t.image)) {result = fatorL;}
+        |t=<NUM> {result = new TOKENNUM (Integer.parseInt(t.image));}
+        |<TRUE> {result = new TF("true");}
+        |<FALSE> {result = new TF("false");}
+    )
+    {return result;}
 }
 
 //FATOR’ →  "(" LISTAEXP? ")" | vazio
-void Fator_ () :
-{}
+FATOR Fator_ (TOKENID tokenid) :
+{LISTAEXPRESSAO le = null ; Token t = null ; }
 {
-(<APARENTESES> (ListaExp())? <FPARENTESES>)?
+(<APARENTESES> (le = ListaExp())? <FPARENTESES>)?
+{return t == null ? tokenid : new CHAMADAFUNCAOFATOR(tokenid, le);}
 }
 
 //OP →  "+" | "-" | "*" | "/" | "&" | "|" | "<" | ">" | "=="
-void Op () :
-{}
+OP Op () :
+{OP result = null ; }
 {
-<SOMA> | <SUB> | <MULT> | <DIV> | <AND> | <OR> | <MENOR> | <MAIOR> | <IGUAL>
+ (
+        <SOMA> {result = new OP("+");}
+        | <SUB> {result = new OP("-");}
+        | <MULT> {result = new OP("*");}
+        | <DIV> {result = new OP("/");}
+        | <AND> {result = new OP("&");}
+        | <OR> {result = new OP("|");}
+        | <MENOR> {result = new OP("<");}
+        | <MAIOR> {result = new OP(">");}
+        | <IGUAL> {result = new OP("==");}
+    )
+    {return result;}
 }
 
-//LISTAEXP → EXP LISTAEXP’
-void ListaExp () :
-{}
+//LISTAEXP → EXP | LISTAEXP "," EXP
+LISTAEXPRESSAO ListaExp () :
+{EXP e = null; ArrayList<EXP> lista = new ArrayList();}
 {
-Exp() ListaExp_()
+    e=Exp() {lista.add(e);} (<VIRGULA> e=Exp() {lista.add(e);})*
+    {return new LISTAEXPRESSAO(lista);}
 }
 
-//LISTAEXP’ → "," EXP  LISTAEXP’ | vazio
-void ListaExp_ () :
-{}
+//FUNC → FUNC "func" TIPO TOKEN_id "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"
+//        | "func" TIPO TOKEN_id "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"
+LISTAFUNCAO Func () :
+{TIPOVARIAVEL tipoDeVar = null; LISTAARGUMENTOS la = null; ArrayList<FUNCAO> funcoes = new ArrayList();
+ArrayList<DECLARACAOVARIAVEL> declaracaoVar = null; SEQUENCIACOMANDO sequenciaCom = null;
+Token t = null; TOKENID tokenid = null;}
 {
-(<VIRGULA> Exp() ListaExp_())?
+    (<FUNC> tipoDeVar=Tipo() t=<ID> <APARENTESES> (la=ListaArg())? <FPARENTESES> <ACHAVES> declaracaoVar=Vardecl() sequenciaCom =SeqComandos() <FCHAVES> {funcoes.add(new FUNCAO(new TOKENID(t.image), tipoDeVar, la, declaracaoVar, sequenciaCom));})+
+    {return new LISTAFUNCAO(funcoes);}
 }
 
-//FUNC → "func" TIPO TOKEN_id "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"  FUNC’
-void Func () :
-{}
-{
-<FUNC> Tipo() <ID> <APARENTESES> (ListaArg())? <FPARENTESES> <ACHAVES> Vardecl() SeqComandos() <FCHAVES> Func_()
-}
 
-//FUNC’ → “func" TIPO TOKEN_id "(" LISTAARG? ")" "{" VARDECL SEQCOMANDOS "}"  FUNC’ | vazio
-void Func_ () :
-{}
+//LISTAARG → TIPO TOKEN_id | LISTAARG "," TIPO TOKEN_id
+LISTAARGUMENTOS ListaArg () :
+{Token t = null; TIPOVARIAVEL tipoDeVar = null; TOKENID tokenId = null;
+LISTAARGUMENTOS la = null; ARGUMENTO arg = null; ArrayList<ARGUMENTO> args = new ArrayList();}
 {
-(<FUNC> Tipo() <ID> <APARENTESES> (ListaArg())? <FPARENTESES> <ACHAVES> Vardecl() SeqComandos() <FCHAVES> Func_() )?
-}
-
-//LISTAARG → TIPO TOKEN_id LISTAARG’
-void ListaArg () :
-{}
-{
-Tipo() <ID> ListaArg_()
-}
-
-//LISTAARG’ → "," TIPO TOKEN_id LISTAARG’ | vazio
-void ListaArg_ () :
-{}
-{
-(<VIRGULA> Tipo() <ID> ListaArg_())?
+    tipoDeVar=Tipo() t=<ID> {args.add(new ARGUMENTO(new TOKENID(t.image), tipoDeVar));} (<VIRGULA> tipoDeVar=Tipo() t=<ID> {args.add(new ARGUMENTO(new TOKENID(t.image), tipoDeVar));})*
+    {return new LISTAARGUMENTOS(args);}
 }
